@@ -1,3 +1,4 @@
+HEAD
 # 🏥 MedTech - Medical Smart Assistant Web App
 
 A full-stack medical platform built with the MERN stack (MongoDB, Express.js, React, Node.js) featuring AI-powered conversation using Cerebras API for symptom analysis and doctor recommendations.
@@ -220,3 +221,5 @@ Feel free to submit issues and enhancement requests!
 
 This project is open source and available under the MIT License.
 
+# medtech
+700d99283736947f6061b6cf97b6762386ad69c0
