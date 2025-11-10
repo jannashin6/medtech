@@ -49,7 +49,7 @@ export const chatWithAI = async (req, res, next) => {
     const cerebrasResponse = await axios.post(
       `${process.env.CEREBRAS_API_URL}/chat/completions`,
       {
-        model: 'llama-3.1-8b-instruct',
+        model: 'llama-3.3-70b',
         messages: [
           {
             role: 'system',

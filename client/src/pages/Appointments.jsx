@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import api from '../utils/api';
-import { Calendar, Clock, User, MapPin, X, CheckCircle } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Calendar, Clock, User, MapPin, X, CheckCircle, AlertCircle, XCircle, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 
@@ -10,7 +10,9 @@ const Appointments = () => {
   const [appointments, setAppointments] = useState([]);
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [bookingLoading, setBookingLoading] = useState(false);
   const [showBookingModal, setShowBookingModal] = useState(false);
+  const [filterStatus, setFilterStatus] = useState('all');
   const [bookingForm, setBookingForm] = useState({
     doctorId: '',
     appointmentDate: '',
@@ -56,6 +58,7 @@ const Appointments = () => {
 
   const handleBookingSubmit = async (e) => {
     e.preventDefault();
+    setBookingLoading(true);
     try {
       await api.post('/appointments', bookingForm);
       toast.success('Appointment booked successfully!');
@@ -70,6 +73,8 @@ const Appointments = () => {
     } catch (error) {
       const message = error.response?.data?.message || 'Failed to book appointment';
       toast.error(message);
+    } finally {
+      setBookingLoading(false);
     }
   };
 
@@ -88,34 +93,84 @@ const Appointments = () => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'confirmed':
-        return 'bg-green-100 text-green-700';
+        return 'bg-green-100 text-green-700 border-green-200';
       case 'pending':
-        return 'bg-yellow-100 text-yellow-700';
+        return 'bg-yellow-100 text-yellow-700 border-yellow-200';
       case 'cancelled':
-        return 'bg-red-100 text-red-700';
+        return 'bg-red-100 text-red-700 border-red-200';
       case 'completed':
-        return 'bg-blue-100 text-blue-700';
+        return 'bg-blue-100 text-blue-700 border-blue-200';
       default:
-        return 'bg-gray-100 text-gray-700';
+        return 'bg-gray-100 text-gray-700 border-gray-200';
     }
   };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'confirmed':
+        return <CheckCircle className="h-4 w-4" />;
+      case 'pending':
+        return <AlertCircle className="h-4 w-4" />;
+      case 'cancelled':
+        return <XCircle className="h-4 w-4" />;
+      case 'completed':
+        return <CheckCircle className="h-4 w-4" />;
+      default:
+        return null;
+    }
+  };
+
+  const filteredAppointments = filterStatus === 'all'
+    ? appointments
+    : appointments.filter(apt => apt.status === filterStatus);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4"
+        >
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">My Appointments</h1>
             <p className="text-gray-600">Manage your scheduled appointments</p>
           </div>
           <button
             onClick={() => setShowBookingModal(true)}
-            className="btn-primary"
+            className="btn-primary flex items-center space-x-2 hover:shadow-lg transition-all"
           >
-            Book New Appointment
+            <Calendar className="h-5 w-5" />
+            <span>Book New Appointment</span>
           </button>
-        </div>
+        </motion.div>
+
+        {/* Filter Tabs */}
+        {!loading && appointments.length > 0 && (
+          <div className="card mb-6">
+            <div className="flex flex-wrap gap-2">
+              {['all', 'pending', 'confirmed', 'completed', 'cancelled'].map((status) => (
+                <button
+                  key={status}
+                  onClick={() => setFilterStatus(status)}
+                  className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                    filterStatus === status
+                      ? 'bg-primary-600 text-white shadow-md'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {status.charAt(0).toUpperCase() + status.slice(1)}
+                  {status !== 'all' && (
+                    <span className="ml-2 text-xs opacity-75">
+                      ({appointments.filter(a => a.status === status).length})
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Appointments List */}
         {loading ? (
@@ -123,27 +178,42 @@ const Appointments = () => {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
           </div>
         ) : appointments.length === 0 ? (
-          <div className="card text-center py-12">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="card text-center py-12"
+          >
             <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-700 mb-2">No appointments yet</h3>
             <p className="text-gray-500 mb-4">Book your first appointment to get started</p>
-            <button onClick={() => setShowBookingModal(true)} className="btn-primary">
-              Book Appointment
+            <button
+              onClick={() => setShowBookingModal(true)}
+              className="btn-primary inline-flex items-center space-x-2"
+            >
+              <Calendar className="h-5 w-5" />
+              <span>Book Appointment</span>
             </button>
+          </motion.div>
+        ) : filteredAppointments.length === 0 ? (
+          <div className="card text-center py-12">
+            <AlertCircle className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">No {filterStatus} appointments</h3>
+            <p className="text-gray-500">Try selecting a different filter</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {appointments.map((appointment, index) => (
+            {filteredAppointments.map((appointment, index) => (
               <motion.div
                 key={appointment._id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.1 }}
-                className="card"
+                whileHover={{ y: -3 }}
+                className="card hover:shadow-lg transition-all"
               >
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center ring-2 ring-primary-50">
                       {appointment.doctorId?.userId?.avatar ? (
                         <img
                           src={appointment.doctorId.userId.avatar}
@@ -166,11 +236,12 @@ const Appointments = () => {
                     </div>
                   </div>
                   <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                    className={`px-3 py-1 rounded-full text-xs font-medium border flex items-center space-x-1 ${getStatusColor(
                       appointment.status
                     )}`}
                   >
-                    {appointment.status}
+                    {getStatusIcon(appointment.status)}
+                    <span>{appointment.status}</span>
                   </span>
                 </div>
 
@@ -297,11 +368,17 @@ const Appointments = () => {
                     type="button"
                     onClick={() => setShowBookingModal(false)}
                     className="btn-secondary flex-1"
+                    disabled={bookingLoading}
                   >
                     Cancel
                   </button>
-                  <button type="submit" className="btn-primary flex-1">
-                    Book Appointment
+                  <button
+                    type="submit"
+                    className="btn-primary flex-1 flex items-center justify-center space-x-2"
+                    disabled={bookingLoading}
+                  >
+                    {bookingLoading && <Loader2 className="h-5 w-5 animate-spin" />}
+                    <span>{bookingLoading ? 'Booking...' : 'Book Appointment'}</span>
                   </button>
                 </div>
               </form>

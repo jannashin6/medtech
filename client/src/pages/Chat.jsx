@@ -1,13 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../utils/api';
-import { Send, Bot, User, Trash2 } from 'lucide-react';
+import { Send, Bot, User, Trash2, Copy, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
+import { format } from 'date-fns';
 
 const Chat = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [copiedIndex, setCopiedIndex] = useState(null);
   const [context, setContext] = useState({
     symptoms: [],
     suggestedSpecialists: [],
@@ -15,6 +17,7 @@ const Chat = () => {
   });
   const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null);
+  const inputRef = useRef(null);
 
   // Load chat history on mount
   useEffect(() => {
@@ -92,6 +95,26 @@ const Chat = () => {
         console.error('Error clearing chat:', error);
         toast.error('Failed to clear chat history');
       }
+    }
+  };
+
+  const copyToClipboard = async (text, index) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedIndex(index);
+      toast.success('Copied to clipboard');
+      setTimeout(() => setCopiedIndex(null), 2000);
+    } catch (error) {
+      toast.error('Failed to copy');
+    }
+  };
+
+  const formatTime = (timestamp) => {
+    if (!timestamp) return '';
+    try {
+      return format(new Date(timestamp), 'h:mm a');
+    } catch {
+      return '';
     }
   };
 
@@ -180,7 +203,7 @@ const Chat = () => {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3 }}
-                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} group`}
                   >
                     <div
                       className={`flex items-start space-x-3 max-w-[80%] ${
@@ -200,14 +223,36 @@ const Chat = () => {
                           <Bot className="h-5 w-5" />
                         )}
                       </div>
-                      <div
-                        className={`rounded-lg px-4 py-3 ${
-                          message.role === 'user'
-                            ? 'bg-primary-600 text-white'
-                            : 'bg-gray-100 text-gray-900'
-                        }`}
-                      >
-                        <p className="whitespace-pre-wrap">{message.content}</p>
+                      <div className="flex-1">
+                        <div
+                          className={`rounded-lg px-4 py-3 ${
+                            message.role === 'user'
+                              ? 'bg-primary-600 text-white'
+                              : 'bg-gray-100 text-gray-900'
+                          }`}
+                        >
+                          <p className="whitespace-pre-wrap">{message.content}</p>
+                        </div>
+                        <div className={`flex items-center mt-1 space-x-2 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                          {message.timestamp && (
+                            <span className="text-xs text-gray-400">
+                              {formatTime(message.timestamp)}
+                            </span>
+                          )}
+                          {message.role === 'assistant' && (
+                            <button
+                              onClick={() => copyToClipboard(message.content, index)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-gray-600 p-1"
+                              title="Copy message"
+                            >
+                              {copiedIndex === index ? (
+                                <Check className="h-3 w-3 text-green-600" />
+                              ) : (
+                                <Copy className="h-3 w-3" />
+                              )}
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </motion.div>
@@ -238,21 +283,26 @@ const Chat = () => {
         <form onSubmit={handleSend} className="card">
           <div className="flex space-x-4">
             <input
+              ref={inputRef}
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Type your message..."
+              placeholder="Type your message... (e.g., 'I have a headache and fever')"
               className="input-field flex-1"
               disabled={loading}
+              autoFocus
             />
             <button
               type="submit"
               disabled={loading || !input.trim()}
-              className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+              className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 transition-all hover:shadow-lg"
             >
               <Send className="h-5 w-5" />
-              <span>Send</span>
+              <span className="hidden sm:inline">Send</span>
             </button>
+          </div>
+          <div className="mt-2 text-xs text-gray-500">
+            💡 Tip: Describe your symptoms clearly for better recommendations
           </div>
         </form>
       </div>

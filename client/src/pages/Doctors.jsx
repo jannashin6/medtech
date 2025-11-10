@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../utils/api';
-import { Search, Star, MapPin, Clock, Stethoscope } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Search, Star, MapPin, Clock, Stethoscope, Filter, X, Award } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 
 const Doctors = () => {
   const [doctors, setDoctors] = useState([]);
   const [specializations, setSpecializations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
     search: '',
     specialization: '',
@@ -54,19 +55,33 @@ const Doctors = () => {
     });
   };
 
+  const clearFilters = () => {
+    setFilters({
+      search: '',
+      specialization: '',
+      city: '',
+    });
+  };
+
+  const activeFiltersCount = Object.values(filters).filter(v => v).length;
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Find Your Doctor</h1>
           <p className="text-gray-600">Browse through our verified medical professionals</p>
-        </div>
+        </motion.div>
 
-        {/* Filters */}
-        <div className="card mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="relative">
+        {/* Search Bar */}
+        <div className="card mb-6">
+          <div className="flex items-center space-x-4">
+            <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
                 type="text"
@@ -76,27 +91,87 @@ const Doctors = () => {
                 className="input-field pl-10"
               />
             </div>
-            <select
-              value={filters.specialization}
-              onChange={(e) => handleFilterChange('specialization', e.target.value)}
-              className="input-field"
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg border transition-colors ${
+                showFilters || activeFiltersCount > 0
+                  ? 'bg-primary-600 text-white border-primary-600'
+                  : 'bg-white text-gray-700 border-gray-300 hover:border-primary-600'
+              }`}
             >
-              <option value="">All Specializations</option>
-              {specializations.map((spec) => (
-                <option key={spec} value={spec}>
-                  {spec}
-                </option>
-              ))}
-            </select>
-            <input
-              type="text"
-              placeholder="City"
-              value={filters.city}
-              onChange={(e) => handleFilterChange('city', e.target.value)}
-              className="input-field"
-            />
+              <Filter className="h-5 w-5" />
+              <span className="hidden sm:inline">Filters</span>
+              {activeFiltersCount > 0 && (
+                <span className="bg-white text-primary-600 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
+                  {activeFiltersCount}
+                </span>
+              )}
+            </button>
           </div>
         </div>
+
+        {/* Advanced Filters */}
+        <AnimatePresence>
+          {showFilters && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="card mb-6 overflow-hidden"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-gray-900">Filter Options</h3>
+                {activeFiltersCount > 0 && (
+                  <button
+                    onClick={clearFilters}
+                    className="text-sm text-red-600 hover:text-red-700 flex items-center space-x-1"
+                  >
+                    <X className="h-4 w-4" />
+                    <span>Clear All</span>
+                  </button>
+                )}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Specialization
+                  </label>
+                  <select
+                    value={filters.specialization}
+                    onChange={(e) => handleFilterChange('specialization', e.target.value)}
+                    className="input-field"
+                  >
+                    <option value="">All Specializations</option>
+                    {specializations.map((spec) => (
+                      <option key={spec} value={spec}>
+                        {spec}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    City
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Enter city name"
+                    value={filters.city}
+                    onChange={(e) => handleFilterChange('city', e.target.value)}
+                    className="input-field"
+                  />
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Results Count */}
+        {!loading && (
+          <div className="mb-4 text-gray-600">
+            Found <span className="font-semibold text-gray-900">{doctors.length}</span> doctor{doctors.length !== 1 ? 's' : ''}
+          </div>
+        )}
 
         {/* Doctors Grid */}
         {loading ? (
@@ -117,11 +192,20 @@ const Doctors = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.1 }}
-                className="card hover:shadow-lg transition-shadow"
+                whileHover={{ y: -5 }}
+                className="card hover:shadow-xl transition-all cursor-pointer group"
               >
+                {/* Verified Badge */}
+                <div className="absolute top-4 right-4">
+                  <div className="bg-green-100 text-green-600 px-2 py-1 rounded-full flex items-center space-x-1 text-xs font-medium">
+                    <Award className="h-3 w-3" />
+                    <span>Verified</span>
+                  </div>
+                </div>
+
                 {/* Doctor Image */}
                 <div className="flex items-center space-x-4 mb-4">
-                  <div className="w-16 h-16 rounded-full bg-primary-100 flex items-center justify-center">
+                  <div className="w-16 h-16 rounded-full bg-primary-100 flex items-center justify-center ring-4 ring-primary-50 group-hover:ring-primary-100 transition-all">
                     {doctor.userId?.avatar ? (
                       <img
                         src={doctor.userId.avatar}
@@ -135,7 +219,7 @@ const Doctors = () => {
                     )}
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-xl font-semibold text-gray-900">
+                    <h3 className="text-xl font-semibold text-gray-900 group-hover:text-primary-600 transition-colors">
                       {doctor.userId?.name || 'Dr. Unknown'}
                     </h3>
                     <p className="text-primary-600 font-medium">{doctor.specialization}</p>
@@ -181,7 +265,7 @@ const Doctors = () => {
                 {/* Action Button */}
                 <Link
                   to={`/appointments/book?doctorId=${doctor._id}`}
-                  className="btn-primary w-full text-center block"
+                  className="btn-primary w-full text-center block group-hover:shadow-lg transition-all"
                 >
                   Book Appointment
                 </Link>

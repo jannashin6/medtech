@@ -41,17 +41,25 @@ export const register = async (req, res, next) => {
 
     // If doctor role, create doctor profile
     if (user.role === 'doctor') {
-      const { specialization, qualification, experience, consultationFee, bio, location } = req.body;
+      const { specialization, qualification, experience, consultationFee, bio, city, state } = req.body;
       
-      await Doctor.create({
+      const doctorData = {
         userId: user._id,
         specialization,
         qualification,
-        experience,
-        consultationFee,
-        bio,
-        location,
-      });
+        experience: Number(experience),
+        consultationFee: Number(consultationFee),
+      };
+
+      // Add optional fields if provided
+      if (bio) doctorData.bio = bio;
+      if (city || state) {
+        doctorData.location = {};
+        if (city) doctorData.location.city = city;
+        if (state) doctorData.location.state = state;
+      }
+      
+      await Doctor.create(doctorData);
     }
 
     // Generate token
