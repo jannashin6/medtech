@@ -1,9 +1,9 @@
 HEAD
-# 🏥 MedTech - Medical Smart Assistant Web App
+# MedTech - Medical Smart Assistant Web App
 
 A full-stack medical platform built with the MERN stack (MongoDB, Express.js, React, Node.js) featuring AI-powered conversation using Cerebras API for symptom analysis and doctor recommendations.
 
-## ✨ Features
+##  Features
 
 - **AI-Powered Chat Assistant**: Chat with an intelligent AI assistant powered by Cerebras API for symptom analysis and medical recommendations
 - **Doctor Discovery**: Browse through verified doctors with detailed profiles, ratings, and specializations
@@ -12,7 +12,7 @@ A full-stack medical platform built with the MERN stack (MongoDB, Express.js, Re
 - **Modern UI**: Clean, responsive design inspired by Practo with smooth animations
 - **Real Database**: Connected to MongoDB Atlas (not dummy data)
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 ### Backend
 - **Node.js** + **Express.js** - RESTful API server
@@ -30,7 +30,7 @@ A full-stack medical platform built with the MERN stack (MongoDB, Express.js, Re
 - **React Hot Toast** - Toast notifications
 - **Lucide React** - Icon library
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 medtech/
@@ -87,7 +87,7 @@ medtech/
 └── README.md
 ```
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### Prerequisites
 
@@ -171,7 +171,7 @@ medtech/
 - `PUT /api/appointments/:id` - Update appointment (Protected)
 - `DELETE /api/appointments/:id` - Cancel appointment (Protected)
 
-## 🔐 Authentication
+##  Authentication
 
 The app uses JWT tokens for authentication. Include the token in the Authorization header:
 
@@ -179,7 +179,7 @@ The app uses JWT tokens for authentication. Include the token in the Authorizati
 Authorization: Bearer <your_jwt_token>
 ```
 
-## 🎨 UI Features
+##  UI Features
 
 - **Responsive Design**: Works seamlessly on desktop, tablet, and mobile
 - **Modern Animations**: Smooth transitions using Framer Motion
@@ -187,37 +187,37 @@ Authorization: Bearer <your_jwt_token>
 - **Toast Notifications**: User-friendly feedback for all actions
 - **Loading States**: Proper loading indicators throughout
 
-## 🧪 Testing
+##  Testing
 
 Use Postman or any API client to test the endpoints. Make sure to:
 1. Register/login to get a JWT token
 2. Include the token in Authorization header for protected routes
 3. Test all CRUD operations
 
-## 🚢 Deployment
+##  Deployment
 
-### Backend (Render/Railway)
+### Backend 
 1. Set environment variables in your hosting platform
 2. Deploy the `server/` directory
 3. Update `FRONTEND_URL` in `.env`
 
-### Frontend (Netlify/Vercel)
+### Frontend 
 1. Build the app: `npm run build`
 2. Deploy the `dist/` folder
 3. Set `VITE_API_URL` to your backend URL
 
-## 📝 Notes
+##  Notes
 
 - All chat conversations are stored in MongoDB for future reference
 - Doctor profiles are linked to user accounts
 - Appointments support real-time status updates
 - The AI assistant provides context-aware responses with symptom tracking
 
-## 🤝 Contributing
+##  Contributing
 
 Feel free to submit issues and enhancement requests!
 
-## 📄 License
+##  License
 
 This project is open source and available under the MIT License.
 
